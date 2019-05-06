@@ -31,6 +31,12 @@ namespace USBCAN
         public bool IsOpen { private set; get; } = false;
         #endregion
 
+        #region 构造
+        private CANHelper()
+        {
+        }
+        #endregion
+
         #region 释放
         /// <summary>
         /// Flag: 标识Disposed是否已经被调用
@@ -162,7 +168,7 @@ namespace USBCAN
                 // 若无错误信息，则返回‘无错误信息’
                 return "无错误信息";
             }
-
+            
             // 由于可能同时出现多种错误，使用按位与的方式读取错误信息
             List<string> errMsgList = new List<string>();
             if ((errInfo.ErrCode & (uint)CAN_API.ErrorType.ERR_CAN_OVERFLOW) != 0)
@@ -237,6 +243,18 @@ namespace USBCAN
 
         #endregion
 
+        #region 公开事件与委托
+        /// <summary>
+        /// 消费帧事件委托
+        /// </summary>
+        /// <param name="frame">报文帧</param>
+        public delegate void ConsumptionFrameEventHandler(CAN_API.VCI_CAN_OBJ frame);
+        /// <summary>
+        /// 消费帧事件  每读取一帧数据发生一次消费帧事件
+        /// </summary>
+        public event ConsumptionFrameEventHandler ConsumptionFrameEvent;
+        #endregion
+
         #region 生产者消费者模式 - 生产数据帧，发出事件消费数据帧
         /// <summary>
         /// 帧缓冲区（生产者消费者队列）
@@ -250,16 +268,6 @@ namespace USBCAN
         /// 消费者线程
         /// </summary>
         private Thread _ConsumerThread;
-        /// <summary>
-        /// 消费帧事件委托
-        /// </summary>
-        /// <param name="frame">报文帧</param>
-        public delegate void ConsumptionFrameEventHandler(CAN_API.VCI_CAN_OBJ frame);
-        /// <summary>
-        /// 消费帧事件
-        /// </summary>
-        public event ConsumptionFrameEventHandler ConsumptionFrameEvent;
-
         /// <summary>
         /// 开始工作线程
         /// </summary>
