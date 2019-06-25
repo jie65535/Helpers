@@ -190,10 +190,33 @@ namespace USBCAN
             /// </summary>
             public uint Reserved;
             /// <summary>
-            /// 滤波方式
+            /// 滤波方式 01
             /// </summary>
             public byte Filter;
+            /// <summary>
+            /// 波特率对应值
+            /// 1000kbps    :0x00
+            /// 800kbps     :0x00
+            /// 500kbps     :0x00
+            /// 250kbps     :0x01
+            /// 100kbps     :0x04
+            /// 50kbps      :0x09
+            /// 20kbps      :0x18
+            /// 10kbps      :0x31
+            /// 5kbps       :0xBF
+            /// </summary>
             public byte Timing0;
+            /// <summary>
+            /// 波特率对应值
+            /// 1000kbps    :0x14
+            /// 800kbps     :0x16
+            /// 500kbps     :0x1C
+            /// 250kbps     :0x1C
+            /// 50kbps      :0x1C
+            /// 20kbps      :0x1C
+            /// 10kbps      :0x1C
+            /// 5kbps       :0xFF
+            /// </summary>
             public byte Timing1;
             /// <summary>
             /// 模式：0:正常|1:只听
