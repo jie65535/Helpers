@@ -1,0 +1,173 @@
+# 不对齐的比特赋值
+
+> 来自FreeModbus/mbtils.c  略微修改以便移植
+
+| 函数 | 功能 |
+| ---- | ---- |
+| xMBUtilSetBits | 设置比特 |
+| xMBUtilGetBits | 获取比特 |
+
+## xMBUtilSetBits
+``` C
+void xMBUtilSetBits( uint8_t * ucByteBuf, uint16_t usBitOffset, uint8_t ucNBits, uint8_t ucValue )
+```
+
+## xMBUtilGetBits
+``` C
+void xMBUtilGetBits( uint8_t * ucByteBuf, uint16_t usBitOffset, uint8_t ucNBits )
+```
+
+## Demo
+``` C
+eMBErrorCode
+eMBRegCoilsCB( uint8_t * pucRegBuffer, uint16_t usAddress, uint16_t usNCoils,
+               eMBRegisterMode eMode )
+{
+    eMBErrorCode    eStatus = MB_ENOERR;
+    uint16_t iNCoils = usNCoils;
+    uint16_t usBitOffset;
+    // Default usAddress + 1
+    usAddress -= 1;
+    usBitOffset = usAddress - REG_RELAYS_START;
+    if( ( usAddress < REG_RELAYS_START ) || ( usAddress + usNCoils > REG_RELAYS_START + REG_RELAYS_SIZE ) )
+        return MB_ENOREG;
+    
+    switch ( eMode )
+    {
+    // read
+    case MB_REG_READ:
+        while ( iNCoils > 0 )
+        {
+            *pucRegBuffer++ = xMBUtilGetBits(RelaysStatusBuf, usBitOffset, iNCoils > 8 ? 8 : iNCoils);
+            iNCoils -= 8;
+            usBitOffset += 8;
+        }
+    break;
+    
+    // write
+    case MB_REG_WRITE:
+        while ( iNCoils > 0 )
+        {
+            xMBUtilSetBits(RelaysStatusBuf, usBitOffset, iNCoils > 8 ? 8 : iNCoils, *pucRegBuffer++);
+            iNCoils -= 8;
+            usBitOffset += 8;
+        }
+        ReverseBits(RelaysStatusBuf[1]);
+        // Set Relays New Status
+        M1203_1_SetAllRelaysStatus(*(u16*)RelaysStatusBuf);
+    break;
+    }
+
+    return eStatus;
+}
+
+```
+
+## Source
+``` C
+/*
+ * FreeModbus Libary: A portable Modbus implementation for Modbus ASCII/RTU.
+ * Copyright (c) 2006-2018 Christian Walter <cwalter@embedded-solutions.at>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+ /* ----------------------- System includes ----------------------------------*/
+#include "stdint.h"
+
+/* ----------------------- Defines ------------------------------------------*/
+#define BITS_UINT8      8U
+
+/* ----------------------- Start implementation -----------------------------*/
+void
+xMBUtilSetBits(uint8_t * ucByteBuf, uint16_t usBitOffset, uint8_t ucNBits,
+	uint8_t ucValue)
+{
+	uint16_t          usWordBuf;
+	uint16_t          usMask;
+	uint16_t          usByteOffset;
+	uint16_t          usNPreBits;
+	uint16_t          usValue = ucValue;
+
+	// assert( ucNBits <= 8 );
+	// assert( ( size_t )BITS_UINT8 == sizeof( uint8_t ) * 8 );
+
+	/* Calculate byte offset for first byte containing the bit values starting
+	 * at usBitOffset. */
+	usByteOffset = (uint16_t)((usBitOffset) / BITS_UINT8);
+
+	/* How many bits precede our bits to set. */
+	usNPreBits = (uint16_t)(usBitOffset - usByteOffset * BITS_UINT8);
+
+	/* Move bit field into position over bits to set */
+	usValue <<= usNPreBits;
+
+	/* Prepare a mask for setting the new bits. */
+	usMask = (uint16_t)((1 << (uint16_t)ucNBits) - 1);
+	usMask <<= usBitOffset - usByteOffset * BITS_UINT8;
+
+	/* copy bits into temporary storage. */
+	usWordBuf = ucByteBuf[usByteOffset];
+	usWordBuf |= ucByteBuf[usByteOffset + 1] << BITS_UINT8;
+
+	/* Zero out bit field bits and then or value bits into them. */
+	usWordBuf = (uint16_t)((usWordBuf & (~usMask)) | usValue);
+
+	/* move bits back into storage */
+	ucByteBuf[usByteOffset] = (uint8_t)(usWordBuf & 0xFF);
+	ucByteBuf[usByteOffset + 1] = (uint8_t)(usWordBuf >> BITS_UINT8);
+}
+
+uint8_t
+xMBUtilGetBits(uint8_t* ucByteBuf, uint16_t usBitOffset, uint8_t ucNBits)
+{
+	uint16_t          usWordBuf;
+	uint16_t          usMask;
+	uint16_t          usByteOffset;
+	uint16_t          usNPreBits;
+
+	/* Calculate byte offset for first byte containing the bit values starting
+	 * at usBitOffset. */
+	usByteOffset = (uint16_t)((usBitOffset) / BITS_UINT8);
+
+	/* How many bits precede our bits to set. */
+	usNPreBits = (uint16_t)(usBitOffset - usByteOffset * BITS_UINT8);
+
+	/* Prepare a mask for setting the new bits. */
+	usMask = (uint16_t)((1 << (uint16_t)ucNBits) - 1);
+
+	/* copy bits into temporary storage. */
+	usWordBuf = ucByteBuf[usByteOffset];
+	usWordBuf |= ucByteBuf[usByteOffset + 1] << BITS_UINT8;
+
+	/* throw away unneeded bits. */
+	usWordBuf >>= usNPreBits;
+
+	/* mask away bits above the requested bitfield. */
+	usWordBuf &= usMask;
+
+	return (uint8_t)usWordBuf;
+}
+```
