@@ -314,10 +314,12 @@ namespace USBCAN
                     for (int i = 0; i < len; i++)
                     {
                         // 实例化帧对象，装入帧缓冲区
-                        _FrameBuffer.Add((CAN_API.VCI_CAN_OBJ)Marshal.PtrToStructure((IntPtr)((uint)readBuffer + i * Marshal.SizeOf(typeof(CAN_API.VCI_CAN_OBJ))), typeof(CAN_API.VCI_CAN_OBJ)));
+                        //_FrameBuffer.Add((CAN_API.VCI_CAN_OBJ)Marshal.PtrToStructure((IntPtr)((uint)readBuffer + i * Marshal.SizeOf(typeof(CAN_API.VCI_CAN_OBJ))), typeof(CAN_API.VCI_CAN_OBJ)));
+                        _FrameBuffer.Add(Marshal.PtrToStructure<CAN_API.VCI_CAN_OBJ>((IntPtr)((uint)readBuffer + i * Marshal.SizeOf(typeof(CAN_API.VCI_CAN_OBJ)))));
                     }
                 }
             }
+            Marshal.FreeHGlobal(readBuffer);
         }
 
         /// <summary>
