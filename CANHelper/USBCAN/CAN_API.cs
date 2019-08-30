@@ -170,7 +170,51 @@ namespace USBCAN
 
             public byte ArLost_ErrData;
         }
-
+        /// <summary>
+        /// CAN波特率枚举
+        /// </summary>
+        public enum CAN_BaudRate
+        {
+            BaudRate_1000kbps = 0,
+            BaudRate_800kbps,
+            BaudRate_500kbps,
+            BaudRate_250kbps,
+            BaudRate_100kbps,
+            BaudRate_50kbps,
+            BaudRate_20kbps,
+            BaudRate_10kbps,
+            BaudRate_5kbps,
+        }
+        /// <summary>
+        /// 波特率对应Timing0值
+        /// </summary>
+        public static readonly byte[] VCI_INIT_CONFIG_Timing0 =
+        {
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+            0x04,
+            0x09,
+            0x18,
+            0x31,
+            0xBF
+        };
+        /// <summary>
+        /// 波特率对应Timing0值
+        /// </summary>
+        public static readonly byte[] VCI_INIT_CONFIG_Timing1 =
+        {
+            0x14,
+            0x16,
+            0x1C,
+            0x1C,
+            0x1C,
+            0x1C,
+            0x1C,
+            0x1C,
+            0xFF
+        };
         /// <summary>
         /// 初始化CAN的配置信息
         /// </summary>
@@ -212,6 +256,7 @@ namespace USBCAN
             /// 800kbps     :0x16
             /// 500kbps     :0x1C
             /// 250kbps     :0x1C
+            /// 100kbps     :0x1C
             /// 50kbps      :0x1C
             /// 20kbps      :0x1C
             /// 10kbps      :0x1C

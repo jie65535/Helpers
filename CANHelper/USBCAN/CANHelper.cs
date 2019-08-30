@@ -86,10 +86,11 @@ namespace USBCAN
         #endregion
 
         #region 打开与关闭
+
         /// <summary>
         /// 初始化并打开CAN设备
         /// </summary>
-        public void Initialize()
+        public void Initialize(CAN_API.CAN_BaudRate baudRate)
         {
             // 如果已经打开，直接返回
             if (IsOpen)
@@ -106,8 +107,8 @@ namespace USBCAN
                 AccMask     = 0xFFFFFFFF,   //            (         AccMask:0xFFFFFFFF）
                 Reserved    = 0x00,         // 保留，填0
                 Filter      = 0x01,         // 滤波方式 01
-                Timing0     = 0x01,         // ( 相当于波特率1000kbps  )
-                Timing1     = 0x14,         // ( 相当于波特率1000kbps  )
+                Timing0     = CAN_API.VCI_INIT_CONFIG_Timing0[(int)baudRate],    // ( 波特率查表 )
+                Timing1     = CAN_API.VCI_INIT_CONFIG_Timing1[(int)baudRate],    // ( 波特率查表 )
                 Mode        = 0x00          // 正常模式； 0:正常模式，可以IO。  1：表示只听模式（只接收，不影响总线）
             };
             // 初始化CAN
@@ -202,6 +203,10 @@ namespace USBCAN
             {
                 // 若未检测到错误信息，则返回‘未知错误’
                 return "未知错误";
+            }
+            else if (errMsgList.Count == 1)
+            {
+                return errMsgList[0];
             }
             else
             {
