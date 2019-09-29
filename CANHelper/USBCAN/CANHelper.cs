@@ -64,6 +64,7 @@ namespace USBCAN
             if (disposing)
             {
                 // 释放托管成员
+                _FrameBuffer.Dispose();
             }
 
             // 释放非托管成员
