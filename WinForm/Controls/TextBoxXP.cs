@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace JumperPelvicFloorTraining.MyControls
+namespace WinForm.Controls
 {
     [ToolboxItem(true)]
     public class TextBoxXP : System.Windows.Forms.TextBox
